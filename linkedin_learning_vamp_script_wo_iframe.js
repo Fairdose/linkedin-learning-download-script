@@ -16,11 +16,7 @@ const sections = []
 
 const courses = []
 
-let courseVideos = []
-
 let brokenLinks = []
-
-let cancelRetry = false
 
 lessonSections.forEach((element,sectionIndex) => {
 
@@ -185,15 +181,15 @@ async function generateVideoURLs () {
 
         let response
         try {
+            await awaitTimeout(5000)
             response = await fetch(course.link)
-            await awaitTimeout(3000)
         } catch (e) {
             break;
         }
         response = await response.text()
         
         const dummyHtml = document.createElement('html')
-        dummyHtml.innerHTML =  response
+        dummyHtml.innerHTML = response
 
         let url = dummyHtml.innerHTML.match(/https:\/\/dms.licdn.com\/playlist\/[a-zA-Z0-9_-]+\/learning-original-video-vbr-720\/[A-Za-z0-9]\/[0-9]+\?[a-zA-Z]=[0-9]+&[a-zA-Z]+;v=[a-zA-Z]+&[a-zA-Z]+;t=[a-zA-Z0-9-_]+/g)
 
@@ -206,10 +202,13 @@ async function generateVideoURLs () {
 
             
         } else {
-            console.log(dummyHtml.innerHTML)
+            console.error(course.fullId)
+            console.error(response)
             brokenLinks.push(course.fullId)
         }
     }
+
+    createDownloadLinksElement()
 }
 
 
@@ -288,9 +287,6 @@ vampBody.style = 'display: block; width: 1px; height: 1px; position: fixed; z-in
 vampBody.id = 'vampIframe'
 
 await generateVideoURLs()
-
-createDownloadLinksElement()
-
 
 if (!document.querySelector('#vampIframe')) {
     v_body.appendChild(vampBody)
