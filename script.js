@@ -109,7 +109,7 @@ async function downloadVideos(prefix = '', interval = 5000) {
 
             console.log(url)
 
-            await downloadFile(url, course.videoNameAfterDownload + '.mp4')
+            await downloadFile(url, prefix + course.videoNameAfterDownload + '.mp4')
 
             console.log(`%cVamp mode: ${Math.floor((100 / courses.length) * (index + 1))}% percent done.`, 'background: green; color: white;')
 
