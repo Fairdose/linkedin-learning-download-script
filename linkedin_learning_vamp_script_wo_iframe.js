@@ -9,14 +9,17 @@
 * and right click on link then use "save link as" context
 */
 
-
 const lessonSections = document.querySelectorAll('.classroom-toc-section');
 
 const sections = []
 
-const courses = []
+let courses = []
 
 let brokenLinks = []
+
+let retryEnabled = true
+
+let retryCount = 0
 
 lessonSections.forEach((element,sectionIndex) => {
 
@@ -29,20 +32,23 @@ lessonSections.forEach((element,sectionIndex) => {
         })
     }
 
-    const courseItems = element.querySelectorAll('.classroom-toc-item__link')
+    const courseItems = element.querySelectorAll('.classroom-toc-item:not([data-toc-content-id*="Assessment"]) .classroom-toc-item__link')
     
     for (let [courseIndex, item] of courseItems.entries()) {
 
-        let courseTitle = item.querySelector('.classroom-toc-item__title').textContent
+        let courseTitle = item.getAttribute('href')
 
-        courseTitle = formatCourseTitle(courseTitle)
+        courseTitle = courseTitle.match(/\/([A-Za-z0-9]+(-[A-Za-z0-9]+)+)\?/g)[0]
+        courseTitle = courseTitle.replace('/', '').replace('?', '').replaceAll('-', '_')
 
         const courseIndexFormatted = `${courseIndex}`.padStart(2, '0')
+
+        const id = `${sectionIndexFormatted}_${courseIndexFormatted}`
 
         const link = item.getAttribute('href').replace('autoplay=true','autoplay=false')
 
         courses.push({
-            fullId: `${sectionIndexFormatted}_${courseIndexFormatted}`,
+            id,
             link,
             videoNameAfterDownload: `${sectionIndexFormatted}_${courseIndexFormatted}_${courseTitle}`,
             videoLink: ''
@@ -50,133 +56,29 @@ lessonSections.forEach((element,sectionIndex) => {
     }
 });
 
-function formatCourseTitle (title) {
-    const toUnderScoreChars = [':', ' ', ',']
-    const nonGrataWordValues = ['(Görüntülendi)', '(Devam ediyor)', '(Viewed)', '(In progress)']
-
-    let formattedTitle = title
-
-    for (let word of nonGrataWordValues) {
-        formattedTitle = formattedTitle.replaceAll(word, '')
-    }
-
-    for (let char of toUnderScoreChars) {
-        formattedTitle = formattedTitle.replaceAll(char, '_')
-    }
-
-    formattedTitle = formattedTitle.replaceAll(/\s/g, '_')
-    formattedTitle = formattedTitle.replaceAll(/\r\n|\r|\n/g, '_')
-    formattedTitle = formattedTitle.match(/([A-Za-z0-9]+(_[A-Za-z0-9]+)+|[A-Za-z0-9]+)/)[0]
-    formattedTitle = formattedTitle.toLowerCase()
-
-    return formattedTitle
-}
-
-function addVideoUrls() {
-    for (const iframeId of courseVideos) {
-        const courseIframe = document.querySelector(`iframe[data-course-id="${iframeId}"]`)
-        let videoUrl = courseIframe.contentWindow.document.querySelector('video')
-        
-        if (videoUrl) {
-            videoUrl = videoUrl.getAttribute('src')
-            const course = courses.find(course => course.fullId === iframeId)
-    
-            course.videoLink = videoUrl
-        } else {
-            brokenIframes.push(iframeId)
-        }
-    }
-
-    if (brokenIframes.length === 0) {
-        console.log("Vamp mode: Download links ready. Starting renamed href links.")
-
-        createDownloadLinksElement()
-
-        return
-    }
-        
-    courseVideos = courseVideos.filter(courseId => {return brokenIframes.includes(courseId)})
-
-    console.log(`%cVamp mode: Got broken urls. Retrying in 10 seconds. Call 'retryCancel()' to disable retry`, 'background:red; color: white; padding: 5px 10px;')
-
-    if (!cancelRetry) {
-        setTimeout(function () { 
-            brokenIframes = []
-            addVideoUrls()
-        }, 10000)
-    }    
-}
-
-function createDownloadLinksElement () {
-
-    const createContainerElement = () => {
-        const containerElement = document.createElement('div')
-        containerElement.style = 'display: flex;'
-
-        return containerElement
-    }
-
-    const createInputElement = (name, courseId) => {
-        const inputElement = document.createElement('input')
-        inputElement.style = 'display: none;'
-        inputElement.value = name
-        inputElement.setAttribute('data-field', courseId)
-
-        return inputElement
-    }
-
-    const createHrefElement = (url, name) => {
-        const hrefElement = document.createElement('a')
-        hrefElement.href = url
-        hrefElement.target = '_blank'
-        hrefElement.download = `${name}.mp4`
-        hrefElement.textContent = 'link'
-
-        return hrefElement
-    }
-    const createNameElement = (name, courseId) => {
-        const spanElement = document. createElement('span')
-        spanElement.textContent = name
-        spanElement.onclick = () => {
-            const target = document.querySelector(`input[data-field="${courseId}"]`)
-            
-            target.select()
-
-            navigator.clipboard.writeText(target.value)
-
-        }
-
-        return spanElement
-    }
-    
-    const linksContainer = document.createElement('div')
-    linksContainer.style = 'width: 600px; height: 600px; overflow-y: scroll; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 99999; background: white;'
-
-    for (const course of courses) {
-        const containerElement = createContainerElement()
-        const link = createHrefElement(course.videoLink, course.videoNameAfterDownload)
-        const span = createNameElement(course.videoNameAfterDownload, course.fullId)
-        const input = createInputElement(course.videoNameAfterDownload, course.fullId)
-        containerElement.appendChild(link)
-        containerElement.appendChild(span)
-        containerElement.appendChild(input)
-
-        linksContainer.appendChild(containerElement)
-    }
-
-    const bodyElement = document.querySelector('body')
-
-    bodyElement.appendChild(linksContainer)
-
-    document.querySelector('#vampIframe').remove()
-
-    console.log('Done')
+function disableRetry() {
+    retryEnabled = false;
+    console.log(`%cVamp mode: Retry disabled`, 'background: yellow; color: white;')
 }
 
 const awaitTimeout = delay =>
   new Promise(resolve => setTimeout(resolve, delay));
 
-async function generateVideoURLs () {
+
+async function downloadFile(url, fileName){
+    await fetch(url, { method: 'get', headers: { Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5', 'Sec-Fetch-Dest': 'video'} })
+    .then(res => res.blob())
+    .then(res => {
+        const aElement = document.createElement('a')
+        aElement.setAttribute('download', fileName)
+        const href = URL.createObjectURL(res)
+        aElement.href = href
+        aElement.setAttribute('target', '_blank')
+        aElement.click()
+        URL.revokeObjectURL(href)
+    })
+}
+async function downloadVideos () {
     for await (const [index, course] of courses.entries()) {
 
         let response
@@ -186,8 +88,9 @@ async function generateVideoURLs () {
         } catch (e) {
             break;
         }
+
         response = await response.text()
-        
+
         const dummyHtml = document.createElement('html')
         dummyHtml.innerHTML = response
 
@@ -196,98 +99,32 @@ async function generateVideoURLs () {
         if (url) {
             url = url[0].replaceAll('&amp;', '&')
 
-            course.videoLink = url
+            console.log(url)
+
+            await downloadFile(url, course.videoNameAfterDownload + '.mp4')
 
             console.log(`%cVamp mode: ${Math.floor((100 / courses.length) * (index + 1))}% percent done.`, 'background: green; color: white;')
 
             
         } else {
-            console.error(course.fullId)
-            console.error(response)
-            brokenLinks.push(course.fullId)
+            console.error(course.id)
+            brokenLinks.push(course.id)
         }
     }
 
-    createDownloadLinksElement()
+    if (brokenLinks.length > 0 && retryEnabled && retryCount < 3) {
+        courses = courses.filter(courseId => {return brokenIframes.includes(courseId)})
+        console.log(`%cVamp mode: Got broken links will retry after 10 seconds`, 'background: red; color: white;')
+
+        retryCount++
+        await downloadVideos()
+
+        return
+    } else if (retryCount === 3) {
+        console.log(`%cVamp mode: Finished with broken links`, 'background: brown; color: white;')
+    }
+
+    console.log(`%cVamp mode: Finished`, 'background: green; color: white;')
 }
 
-
-
-function createDownloadLinksElement () {
-
-    const createContainerElement = () => {
-        const containerElement = document.createElement('div')
-        containerElement.style = 'display: flex; padding: 0.5rem 1rem;'
-
-        return containerElement
-    }
-
-    const createInputElement = (name, courseId) => {
-        const inputElement = document.createElement('input')
-        inputElement.style = 'display: none;'
-        inputElement.value = name
-        inputElement.setAttribute('data-field', courseId)
-
-        return inputElement
-    }
-
-    const createHrefElement = (url, name) => {
-        const hrefElement = document.createElement('a')
-        hrefElement.href = url
-        hrefElement.target = '_blank'
-        hrefElement.setAttribute('download')
-        hrefElement.textContent = 'link'
-        hrefElement.style = 'margin-right: 10px;'
-
-        return hrefElement
-    }
-    const createNameElement = (name) => {
-        const spanElement = document.createElement('span')
-        spanElement.textContent = name
-
-        return spanElement
-    }
-    
-    const linksContainer = document.createElement('div')
-    linksContainer.style = 'width: 600px; height: 600px; overflow-y: scroll; position: fixed; top: 0; right: 0; display: flex; flex-direction: column; z-index: 99999; background: white;'
-
-    for (const course of courses) {
-        const containerElement = createContainerElement()
-        if (course.videoLink) {
-            const link = createHrefElement(course.videoLink, course.videoNameAfterDownload)
-            const span = createNameElement(course.videoNameAfterDownload, course.fullId)
-            const input = createInputElement(course.videoNameAfterDownload, course.fullId)
-            span.onclick = () => {
-                const target = document.querySelector(`input[data-field="${course.fullId}"]`)
-                
-                target.select()
-    
-                navigator.clipboard.writeText(target.value)
-            }
-            containerElement.appendChild(link)
-            containerElement.appendChild(span)
-            containerElement.appendChild(input)
-        }
-
-        linksContainer.appendChild(containerElement)
-    }
-
-    const bodyElement = document.querySelector('body')
-
-    bodyElement.appendChild(linksContainer)
-
-    document.querySelector('#vampIframe').remove()
-
-    console.log('Done')
-}
-
-const v_body = document.querySelector('body')
-const vampBody = document.createElement('div')
-vampBody.style = 'display: block; width: 1px; height: 1px; position: fixed; z-index: -9999; right: 0; top: 0'
-vampBody.id = 'vampIframe'
-
-await generateVideoURLs()
-
-if (!document.querySelector('#vampIframe')) {
-    v_body.appendChild(vampBody)
-}
+await downloadVideos()
