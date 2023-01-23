@@ -25,14 +25,17 @@ Q&A:
 Q: I'm getting an error?
 A: Make sure that you did not add anything to script.js file.
 
+Q: Where are the exercise files?
+A: Download it manually.
+
 Q: Will i get a LinkedIn certificates?
 A: No.
 
 Q: But how can i get a LinkedIn certificate?
 A: Use your common sense.
 
-Q: Where are the exercise files?
-A: Download it manually.
-
 Q: Where are the subtitles?
 A: Dude, this is not a premium service! It was a script for my personal use that I wrote it in my free time.
+
+Q: Where are the downloaded files?
+A: In your browser's default download folder or in your last download location.
