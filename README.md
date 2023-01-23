@@ -23,7 +23,7 @@
 Q&A:
 
 Q: I'm getting an error?
-A: Make sure that you did not add anything to script.js file.
+A: Make sure that you did not add anything to script.js file. If any
 
 Q: Where are the exercise files?
 A: Download it manually.
