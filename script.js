@@ -134,6 +134,8 @@ async function downloadVideos(prefix = '', interval = 5000) {
 
     } else if (retryCount === 3) {
         console.log(`%cVamp mode: Finished with broken links`, 'background: brown; color: white;')
+
+        return
     }
 
     console.log(`%cVamp mode: Finished`, 'background: green; color: white;')
