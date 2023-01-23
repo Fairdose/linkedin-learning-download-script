@@ -4,9 +4,7 @@
 * - console usage know-how
 * 
 * Usage:
-* Copy and paste it in console. After all the links have been filled
-* a container will appear. Click on text to copy name to clipboard
-* and right click on link then use "save link as" context
+* Copy and paste it in console. Videos will start to download immediately
 */
 
 const lessonSections = document.querySelectorAll('.classroom-toc-section');
@@ -38,7 +36,7 @@ lessonSections.forEach((element,sectionIndex) => {
 
         let courseTitle = item.getAttribute('href')
 
-        courseTitle = courseTitle.match(/\/([A-Za-z0-9]+(_[A-Za-z0-9]+)+)|[A-Za-z0-9]+\?/g)[0]
+        courseTitle = courseTitle.match(/\/([A-Za-z0-9]+(_[A-Za-z0-9]+)+|[A-Za-z0-9-_]+)\?/g)[0]
         courseTitle = courseTitle.replace('/', '').replace('?', '').replaceAll('-', '_')
 
         const courseIndexFormatted = `${courseIndex}`.padStart(2, '0')
