@@ -19,7 +19,7 @@ let retryEnabled = true
 
 let retryCount = 0
 
-lessonSections.forEach((element,sectionIndex) => {
+lessonSections.forEach((element, sectionIndex) => {
 
     const sectionIndexFormatted = `${sectionIndex}`.padStart(2, '0')
 
@@ -43,7 +43,7 @@ lessonSections.forEach((element,sectionIndex) => {
 
         const id = `${sectionIndexFormatted}_${courseIndexFormatted}`
 
-        const link = item.getAttribute('href').replace('autoplay=true','autoplay=false')
+        const link = item.getAttribute('href').replace('autoplay=true', 'autoplay=false')
 
         courses.push({
             id,
@@ -60,24 +60,42 @@ function disableRetry() {
 }
 
 const awaitTimeout = delay =>
-  new Promise(resolve => setTimeout(resolve, delay));
+    new Promise(resolve => setTimeout(resolve, delay));
 
-
-async function downloadFile(url, fileName){
-    let response = await fetch(url, { method: 'get', headers: { Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5', 'Sec-Fetch-Dest': 'video'} })
+async function downloadFile(url, fileName) {
+    let response = await fetch(url, {
+        method: 'get',
+        headers: {
+            Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5',
+            'Sec-Fetch-Dest': 'video'
+        }
+    })
 
     response = await response.blob()
 
-    const aElement = document.createElement('a')
-    aElement.setAttribute('download', fileName)
-    const href = URL.createObjectURL(response)
-    aElement.href = href
-    aElement.setAttribute('target', '_blank')
-    aElement.click()
-    URL.revokeObjectURL(href)
+    const urlObject = URL.createObjectURL(response)
 
+    const linkAttributes = [
+        { attr: 'download', value: fileName },
+        { attr: 'href', value: urlObject },
+        { attr: 'target', value: '_blank'}
+    ]
+
+    const downloadLink = document.createElement('a')
+
+    for (const attribute in linkAttributes) {
+        const { attr, value } = attribute
+        downloadLink.setAttribute(attr, value)
+    }
+
+    downloadLink.click()
+
+    URL.revokeObjectURL(urlObject)
+
+    downloadLink.remove()
 }
-async function downloadVideos () {
+
+async function downloadVideos() {
     for await (const [index, course] of courses.entries()) {
 
         let response
@@ -104,7 +122,7 @@ async function downloadVideos () {
 
             console.log(`%cVamp mode: ${Math.floor((100 / courses.length) * (index + 1))}% percent done.`, 'background: green; color: white;')
 
-            
+
         } else {
             console.error(course.id)
             brokenLinks.push(course.id)
@@ -112,7 +130,9 @@ async function downloadVideos () {
     }
 
     if (brokenLinks.length > 0 && retryEnabled && retryCount < 3) {
-        courses = courses.filter(courseId => {return brokenIframes.includes(courseId)})
+        courses = courses.filter(courseId => {
+            return brokenIframes.includes(courseId)
+        })
         console.log(`%cVamp mode: Got broken links will retry after 10 seconds. To disable retry call disableRetry() function.`, 'background: red; color: white;')
 
         retryCount++
