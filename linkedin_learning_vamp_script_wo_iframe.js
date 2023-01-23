@@ -66,17 +66,18 @@ const awaitTimeout = delay =>
 
 
 async function downloadFile(url, fileName){
-    await fetch(url, { method: 'get', headers: { Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5', 'Sec-Fetch-Dest': 'video'} })
-    .then(res => res.blob())
-    .then(res => {
-        const aElement = document.createElement('a')
-        aElement.setAttribute('download', fileName)
-        const href = URL.createObjectURL(res)
-        aElement.href = href
-        aElement.setAttribute('target', '_blank')
-        aElement.click()
-        URL.revokeObjectURL(href)
-    })
+    let response = await fetch(url, { method: 'get', headers: { Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5', 'Sec-Fetch-Dest': 'video'} })
+
+    response = response.blob()
+
+    const aElement = document.createElement('a')
+    aElement.setAttribute('download', fileName)
+    const href = URL.createObjectURL(response)
+    aElement.href = href
+    aElement.setAttribute('target', '_blank')
+    aElement.click()
+    URL.revokeObjectURL(href)
+
 }
 async function downloadVideos () {
     for await (const [index, course] of courses.entries()) {
