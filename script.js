@@ -86,12 +86,12 @@ async function downloadFile(url, fileName) {
     downloadLink.remove()
 }
 
-async function downloadVideos(prefix = '') {
+async function downloadVideos(prefix = '', interval = 5000) {
     for await (const [index, course] of courses.entries()) {
 
         let response
         try {
-            await awaitTimeout(5000)
+            await awaitTimeout(interval)
             response = await fetch(course.link)
         } catch (e) {
             break;
@@ -122,7 +122,7 @@ async function downloadVideos(prefix = '') {
 
     if (brokenLinks.length > 0 && retryEnabled && retryCount < 3) {
         courses = courses.filter(courseId => {
-            return brokenLinks.includes(courseId)
+            return brokenLinks.includes(course.id)
         })
         console.log(`%cVamp mode: Got broken links will retry after 10 seconds. To disable retry call disableRetry() function.`, 'background: red; color: white;')
 
@@ -132,7 +132,6 @@ async function downloadVideos(prefix = '') {
 
         await downloadVideos()
 
-        return
     } else if (retryCount === 3) {
         console.log(`%cVamp mode: Finished with broken links`, 'background: brown; color: white;')
     }
