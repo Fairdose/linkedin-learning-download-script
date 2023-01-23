@@ -23,7 +23,7 @@ let retryCount = 0
 
 lessonSections.forEach((element,sectionIndex) => {
 
-    sectionIndexFormatted = `${sectionIndex}`.padStart(2, '0')
+    const sectionIndexFormatted = `${sectionIndex}`.padStart(2, '0')
 
     if (!sections.find(section => section.sectionIndex === sectionIndexFormatted)) {
         sections.push({
@@ -33,12 +33,12 @@ lessonSections.forEach((element,sectionIndex) => {
     }
 
     const courseItems = element.querySelectorAll('.classroom-toc-item:not([data-toc-content-id*="Assessment"]) .classroom-toc-item__link')
-    
+
     for (let [courseIndex, item] of courseItems.entries()) {
 
         let courseTitle = item.getAttribute('href')
 
-        courseTitle = courseTitle.match(/\/([A-Za-z0-9]+(-[A-Za-z0-9]+)+)\?/g)[0]
+        courseTitle = courseTitle.match(/\/([A-Za-z0-9]+(_[A-Za-z0-9]+)+)|[A-Za-z0-9]+\?/g)[0]
         courseTitle = courseTitle.replace('/', '').replace('?', '').replaceAll('-', '_')
 
         const courseIndexFormatted = `${courseIndex}`.padStart(2, '0')
@@ -54,7 +54,7 @@ lessonSections.forEach((element,sectionIndex) => {
             videoLink: ''
         })
     }
-});
+})
 
 function disableRetry() {
     retryEnabled = false;
@@ -68,7 +68,7 @@ const awaitTimeout = delay =>
 async function downloadFile(url, fileName){
     let response = await fetch(url, { method: 'get', headers: { Accept: 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5', 'Sec-Fetch-Dest': 'video'} })
 
-    response = response.blob()
+    response = await response.blob()
 
     const aElement = document.createElement('a')
     aElement.setAttribute('download', fileName)
@@ -115,7 +115,7 @@ async function downloadVideos () {
 
     if (brokenLinks.length > 0 && retryEnabled && retryCount < 3) {
         courses = courses.filter(courseId => {return brokenIframes.includes(courseId)})
-        console.log(`%cVamp mode: Got broken links will retry after 10 seconds`, 'background: red; color: white;')
+        console.log(`%cVamp mode: Got broken links will retry after 10 seconds. To disable retry call disableRetry() function.`, 'background: red; color: white;')
 
         retryCount++
         await downloadVideos()
