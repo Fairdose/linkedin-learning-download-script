@@ -86,7 +86,7 @@ async function downloadFile(url, fileName) {
     downloadLink.remove()
 }
 
-async function downloadVideos() {
+async function downloadVideos(prefix = '') {
     for await (const [index, course] of courses.entries()) {
 
         let response
