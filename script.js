@@ -141,4 +141,6 @@ async function downloadVideos(prefix = '', interval = 5000) {
     console.log(`%cVamp mode: Finished`, 'background: green; color: white;')
 }
 
+const getcName = window.location.href.match(/([A-Za-z0-9]+(-[A-Za-z0-9]+)+)/g)[0]
+
 await downloadVideos()
