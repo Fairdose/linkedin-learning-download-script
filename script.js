@@ -122,7 +122,7 @@ async function downloadVideos(prefix = '', interval = 5000) {
 
     if (brokenLinks.length > 0 && retryEnabled && retryCount < 3) {
         courses = courses.filter(courseId => {
-            return brokenLinks.includes(course.id)
+            return brokenLinks.includes(courseId)
         })
         console.log(`%cVamp mode: Got broken links will retry after 10 seconds. To disable retry call disableRetry() function.`, 'background: red; color: white;')
 
